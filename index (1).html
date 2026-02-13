@@ -1,0 +1,232 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Azam's 26-Flip Challenge</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+            background-color: #333;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* --- STATIC BACKGROUND --- */
+        #world {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            background: linear-gradient(to bottom, #1E90FF 0%, #87CEEB 40%, #ffffff 40%, #006994 40%, #00BFFF 60%);
+            z-index: 1;
+        }
+        .sun {
+            position: absolute; top: 5%; right: 10%; width: 60px; height: 60px;
+            background: #FFD700; border-radius: 50%;
+            box-shadow: 0 0 40px #FFD700, 0 0 80px #FF8C00;
+        }
+        .ocean {
+            position: absolute; top: 40%; width: 100%; height: 20%;
+            background: linear-gradient(to bottom, #006994, #00BFFF);
+        }
+        .deck {
+            position: absolute; top: 60%; width: 100%; height: 40%;
+            background: repeating-linear-gradient(90deg, #DEB887 0px, #DEB887 48px, #8B4513 49px, #8B4513 50px);
+            perspective: 500px;
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* --- COIN SETUP --- */
+        .coin-wrapper {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px; height: 180px;
+            perspective: 1000px;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .coin {
+            width: 100%; height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            /* Important: Transition is handled by JS now for perfect timing */
+        }
+
+        .side {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%; backface-visibility: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at center, #fce3ba 0%, #e6be75 40%, #c49138 100%);
+            border: 6px solid #d4af37;
+            box-shadow: inset 0 0 10px #7a5412, 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* HEADS */
+        .heads { transform: rotateX(0deg); }
+        .btc-symbol {
+            font-size: 100px; font-weight: 900; color: #d4af37;
+            text-shadow: 1px 1px 0px #fff, -1px -1px 0px #b08d26;
+            position: relative; z-index: 2;
+        }
+        .ring-text {
+            position: absolute; width: 100%; height: 100%;
+            animation: spin-slow 20s linear infinite;
+        }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* TAILS */
+        .tails {
+            transform: rotateX(180deg);
+            background: radial-gradient(ellipse at center, #e6be75 0%, #b08d26 100%);
+            flex-direction: column;
+        }
+        .chip {
+            width: 60px; height: 35px;
+            background: linear-gradient(135deg, #d4af37, #8a6e21);
+            border: 1px solid #5c4004; margin-bottom: 8px; position: relative;
+        }
+        .azam-tag {
+            background: #5c4004; color: #fff; padding: 3px 8px; font-size: 10px;
+            border-radius: 4px; font-weight: bold; z-index: 5;
+            border: 1px solid #ffd700;
+        }
+
+        /* --- UI --- */
+        #status {
+            position: fixed; bottom: 10%; width: 100%; text-align: center;
+            font-size: 26px; font-weight: 900; color: white;
+            text-shadow: 2px 2px 4px #000; z-index: 100;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        /* Invisible Buttons */
+        .zone { position: fixed; z-index: 200; cursor: pointer; }
+        #z-top { top: 0; left: 0; width: 100%; height: 35vh; }
+        #z-right { top: 35vh; right: 0; width: 50%; bottom: 0; }
+        #z-left { top: 35vh; left: 0; width: 50%; bottom: 0; }
+
+    </style>
+</head>
+<body>
+
+    <div id="world">
+        <div class="sun"></div>
+        <div class="ocean"></div>
+        <div class="deck"></div>
+    </div>
+
+    <div class="coin-wrapper">
+        <div class="coin" id="coin">
+            <div class="side heads">
+                <div class="ring-text">
+                    <svg viewBox="0 0 100 100" width="100%" height="100%">
+                        <path id="curve" d="M 12, 50 A 38,38 0 1,1 88,50 A 38,38 0 1,1 12,50" fill="none"/>
+                        <text font-size="6.5" fill="#7a5412" font-weight="bold" letter-spacing="2">
+                            <textPath xlink:href="#curve" startOffset="50%" text-anchor="middle">★ AZAM KHAN ★ BITCOIN ★</textPath>
+                        </text>
+                    </svg>
+                </div>
+                <div class="btc-symbol">₿</div>
+            </div>
+            <div class="side tails">
+                <div class="chip"></div>
+                <div class="azam-tag">AZAM KHAN</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status">TAP SCREEN</div>
+
+    <div id="z-top" class="zone" onclick="flip('tails')"></div>
+    <div id="z-right" class="zone" onclick="flip('heads')"></div>
+    <div id="z-left" class="zone" onclick="flip('random')"></div>
+
+    <script>
+        const coin = document.getElementById('coin');
+        const status = document.getElementById('status');
+        let isFlipping = false;
+        let currentRotation = 0; // Tracks total rotation history
+
+        // Sound System
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            if (type === 'toss') {
+                osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.3); // Longer sound for long flip
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            } else {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            }
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function flip(cheat) {
+            if (isFlipping) return;
+            isFlipping = true;
+            status.innerText = "";
+            playSound('toss');
+
+            // 1. Determine Result
+            let result = Math.random() < 0.5 ? 0 : 1; // 0=Heads, 1=Tails
+            if (cheat === 'heads') { console.log("Cheat: Heads"); result = 0; }
+            if (cheat === 'tails') { console.log("Cheat: Tails"); result = 1; }
+
+            // 2. CALCULATE 26 FLIPS
+            // 26 full spins = 26 * 360 = 9360 degrees
+            const baseSpins = 9360; 
+            
+            // Add to current rotation (Additive Animation)
+            // This ensures it never spins back, always forward
+            let nextRotation = currentRotation + baseSpins;
+
+            // Adjust landing based on Heads/Tails
+            // If we want Heads (0), rotation % 360 should be 0
+            // If we want Tails (1), rotation % 360 should be 180
+            
+            const currentMod = nextRotation % 360;
+            
+            if (result === 0) { // Want Heads
+                if (currentMod !== 0) {
+                    nextRotation += (360 - currentMod); // Fix to land on 0
+                }
+            } else { // Want Tails
+                if (currentMod !== 180) {
+                    nextRotation += (180 + (360 - currentMod)) % 360; // Fix to land on 180
+                }
+            }
+
+            // 3. APPLY ANIMATION
+            // Fixed time: 3.5 seconds for 26 flips
+            coin.style.transition = "transform 3.5s cubic-bezier(0.25, 1, 0.5, 1)";
+            coin.style.transform = `rotateX(${nextRotation}deg) scale(1.3)`;
+            
+            // Update global rotation tracker
+            currentRotation = nextRotation;
+
+            // 4. FINISH
+            setTimeout(() => {
+                coin.style.transform = `rotateX(${nextRotation}deg) scale(1)`; // Scale back down
+                playSound('land');
+                status.innerText = result === 0 ? "HEADS (WIN)" : "TAILS (WIN)";
+                isFlipping = false;
+            }, 3500); // Matches transition time
+        }
+    </script>
+</body>
+</html>
